@@ -1,40 +1,29 @@
 import machine
-import socket
+import time
 
 from network import WLAN
 
-ADDR='192.168.0.100'
+ADDR='192.168.1.100'
 SUBNET_MASK='255.255.255.0'
-DEFAULT_GATEWAY='192.168.0.1'
-DNS_SERVER='192.168.0.1'
-REMOTE_ADDR='whereischarlie.org'
-REMOTE_PORT=80
+DEFAULT_GATEWAY='192.168.1.1'
+DNS_SERVER='8.8.8.8'
 
 class WifiController:
     def __init__(self):
         self._wlan = WLAN(mode=WLAN.STA)
-        __configIf()
-        __connectIf()
-        __configSocket()
+        nets = self._wlan.scan()
+        for net in nets:
+            if net.ssid == 'stranger':
+                self._wlan.connect(net.ssid, auth=(WLAN.WPA2, 'inastrangewlan'), timeout=5000)
+                while not self._wlan.isconnected():
+                    machine.idle()
+                break
+        self._wlan.ifconfig(config=(ADDR, SUBNET_MASK, DEFAULT_GATEWAY, DNS_SERVER))
 
-    def __configIf():
-        _wlan.ifconfig(config=(ADDR, SUBNET_MASK, DEFAULT_GATEWAY, DNS_SERVER))
-
-    def __connectIf():
-        _wlan.connect(ssid='stranger', auth=(WLAN.WPA2, 'inastrangewlan'))
-        while not _wlan.isconnected():
-            time.sleep_ms(1000)
-
-    def __configSocket():
-        a = socket.getaddrinfo(REMOTE_ADDR, REMOTE_PORT)[0][-1]
-        self._sock = socket.socket()
-        _sock.connect(a)
-
-    def canSend():
+    def canSend(self):
         """return true if interface can send data, false otherwise"""
-        return _wlan.isconnected() and (s > 0)
+        return self._wlan.isconnected()
 
-    def send(data):
+    def send(self, data):
         """attempts to send via interface, returns success status"""
-        _sock.send(data)
-        return True
+        return False

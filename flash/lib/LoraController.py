@@ -1,8 +1,8 @@
 class LoraController:
-    def canSend():
+    def canSend(self):
         """return true if interface can send data, false otherwise"""
         return False
 
-    def send(data):
+    def send(self, data):
         """attempts to send via interface, returns success status"""
         return False
