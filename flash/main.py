@@ -1,47 +1,45 @@
-# Micropython libs
-import logging
-
 # Pycom libs
 from pytrack import Pytrack
+from L76GNSS import L76GNSS
 
-# 3rd party libs for pycom modules
-from L76GNSSV4 import L76GNSS
+# Micropython libs
+import json
+import time
+import urequests
 
 # Custom libs
 import Handler
 import LoraController
 import LteController
-import Serializer
 import WifiController
 
 
 # ---- Initialize constants ----
-
-# ---- Initialize logger ----
-logger = logging.getLogger("logger")
+#url = "https://whereischarlie.org/position"
+url = "https://test.default.whereischarlie.appspot.com/position"
+headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+delay = .1
 
 # ---- Initialize Pytrack and GPS ----
 py  = Pytrack()
 gps = L76GNSS(py, timeout=30)
 
 # ---- Initialize communication controllers ----
-lora = LoraController()
-wifi = WifiController()
-lte  = LteController()
-
-# ---- Initialize Serializer ----
-serializer = Serializer()
+#lora = LoraController()
+#wifi = WifiController()
+#lte  = LteController()
 
 # ---- Initialize connection handler ----
-handler = Handler()
-handler.registerDataCallback(serilizer.serialize(gps.coor))
-handler.registerCommIf(lora)
-handler.registerCommIf(wifi)
-handler.registerCommIf(lte)
+#handler = Handler()
+#handler.registerCommIf(lora)
+#handler.registerCommIf(wifi)
+#handler.registerCommIf(lte)
 
 # ---- Mainline ----
 while True:
-    logger.debug("calling handler.send()")
-    handler.send(serilizer.serialize(gps.coordinates()))
-    logger.debug("calling sleep for 1s")
-    time.sleep_ms(1000)
+    #handler.send()
+    (lat, lng) = gps.coordinates()
+    data = {'lat': lat, 'lng': lng}
+    if (lat != None) and (lng != None):
+        r = urequests.post(url, data=json.dumps(data), headers=headers)
+    time.sleep(delay)

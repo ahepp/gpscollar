@@ -7,21 +7,18 @@ ADDR='192.168.0.100'
 SUBNET_MASK='255.255.255.0'
 DEFAULT_GATEWAY='192.168.0.1'
 DNS_SERVER='192.168.0.1'
-REMOTE_ADDR='192.168.145.130'
-REMOTE_PORT=5000
+REMOTE_ADDR='whereischarlie.org'
+REMOTE_PORT=80
 
 class WifiController:
-    _wlan
-    _sock
-
-    def __init__():
-        _wlan = WLAN(mode=WLAN.STA)
+    def __init__(self):
+        self._wlan = WLAN(mode=WLAN.STA)
         __configIf()
         __connectIf()
         __configSocket()
 
     def __configIf():
-        _wlan.ifconfig(config=(ADDR, SUBNET_MASK, DEFAULT_GATEWAY, DNS_SERVER)
+        _wlan.ifconfig(config=(ADDR, SUBNET_MASK, DEFAULT_GATEWAY, DNS_SERVER))
 
     def __connectIf():
         _wlan.connect(ssid='stranger', auth=(WLAN.WPA2, 'inastrangewlan'))
@@ -30,8 +27,8 @@ class WifiController:
 
     def __configSocket():
         a = socket.getaddrinfo(REMOTE_ADDR, REMOTE_PORT)[0][-1]
-        _sock = socket.socket()
-        _sock.connect(a, SOCK_DGRAM)
+        self._sock = socket.socket()
+        _sock.connect(a)
 
     def canSend():
         """return true if interface can send data, false otherwise"""
@@ -41,4 +38,3 @@ class WifiController:
         """attempts to send via interface, returns success status"""
         _sock.send(data)
         return True
-
