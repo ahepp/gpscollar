@@ -3,16 +3,16 @@ from pytrack import Pytrack
 from L76GNSS import L76GNSS
 
 # Micropython libs
-import json
-import time
-import urequests
+import usocket
+import ustruct
+import utime
 
 # Interface controllers
 from WifiController import WifiController
+#from LteController import LteController
 
 # ---- Initialize constants ----
-url = "https://whereischarlie.org/position"
-headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+#url = "whereischarlie.org"
 delay = 1000
 
 # ---- Initialize Pytrack and GPS ----
@@ -24,12 +24,16 @@ wifi = WifiController()
 
 # ---- Mainline ----
 while True:
-    deadline = time.ticks_ms() + delay # should fail gracefully on rollover
+    # set deadline
+    deadline = utime.ticks_ms() + delay
+
     (lat, lng) = gps.coordinates()
-    data = {'lat': lat, 'lng': lng}
-    #print("(" + str(lat) + ", " + str(lng) + ")")
-    if (lat != None) and (lng != None):
-        r = urequests.post(url, data=json.dumps(data), headers=headers)
-    dur = deadline - time.ticks_ms()
-    if dur > 0:
-        time.sleep_ms(dur)
+    if (lat != None) and (lng != None): # wait for gps fix
+        if wifi.canSend():
+            data = bytearray(ustruct.pack("ff", lat, lng)) #TODO byte order?
+            wifi.send(data)
+
+    # sleep until deadline
+    dur = deadline - utime.ticks_ms()
+    if dur > delay: # handles rollover by not waiting at all
+        utime.sleep_ms(dur)
