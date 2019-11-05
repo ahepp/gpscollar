@@ -3,9 +3,8 @@ import usocket
 
 from network import WLAN
 
-url = 'whereischarlie.org'
-#url = '192.168.1.253'
-port = 5000
+url="35.239.96.98"
+port=5000
 ADDR='192.168.1.100'
 SUBNET_MASK='255.255.255.0'
 DEFAULT_GATEWAY='192.168.1.1'
