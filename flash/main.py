@@ -1,66 +1,88 @@
-# Pycom libs
-from pytrack import Pytrack
-from L76GNSS import L76GNSS
-
 import os
+import machine
 from machine import SD
+from machine import Timer
 
-# Micropython libs
 import usocket
 import ustruct
 import utime
 
-# Interface controllers
+from pytrack import Pytrack
+from L76GNSS import L76GNSS
+
 from WifiController import WifiController
 
-# ---- Initialize constants ----
-delay_ms = 100
-log_writeback_cnt = 1
+def log_coords(alarm):
+    global lat
+    global lng
+    global log
 
-# ---- Initialize Pytrack and GPS ----
+    print("log_coords")
+    (llat, llng) = gps.coordinates()
+
+    irq_state = machine.disable_irq()
+    lat = llat
+    lng = llng
+    if not ((lat == None ) or (lng == None)):
+        log = log + str(utime.ticks_ms()) + ", " + str(lat) + ", " + str(lng) + "\n"
+    machine.enable_irq(irq_state)
+    print("end log_coords")
+
+def log_wb(alarm):
+    global log
+
+    print("log_wb")
+    f = open('/sd/log.txt', 'a')
+
+    irq_state = machine.disable_irq()
+    f.write(log)
+    log = ""
+    machine.enable_irq(irq_state)
+
+    f.close()
+    print("end log_wb")
+
+def udp_send(alarm):
+    global lat
+    global lng
+
+    print("udp_send")
+
+    irq_state = machine.disable_irq()
+    llat = lat
+    llng = lng
+    machine.enable_irq(irq_state)
+    print (llat)
+    print (llng)
+
+    if not ((llat == None ) or (llng == None)):
+        if wifi.canSend():
+            data = bytearray(ustruct.pack("ff", float(llat), float(llng)))
+            wifi.send(data)
+            print("sent!")
+        else:
+            wifi.connect()
+    print("end udp_send")
+
 py  = Pytrack()
-gps = L76GNSS(py, timeout=30)
-sd = SD()
-os.mount(sd, '/sd')
-f = open('/sd/log.txt', 'a')
+gps = L76GNSS(py)
 
-# ---- Initialize WiFi interface ----
 wifi = WifiController()
 
-# ---- Mainline ----
-cnt = 0
+sd = SD()
+os.mount(sd, '/sd')
+
+lat = None
+lng = None
+log = ""
+
+udp_send_interval_ms = 10
+log_interval_ms = 1
+log_wb_interval_ms = 10
+
+Timer.Alarm(log_coords, 1, periodic=True)
+Timer.Alarm(log_wb, 5, periodic=True)
+Timer.Alarm(udp_send, 10, periodic=True)
+
 while True:
-    # set deadline
-    deadline = utime.ticks_ms() + delay_ms
-
-    # get data and log it
-    coords = gps.coordinates()
-    time = gps.getUTCTime()
-    lat = coords['latitude']
-    lng = coords['longitude']
-
-    f.write(time + ", " + str(lat) + ", " + str(lng) + "\n")
-    print(time)
-    print(lat)
-    print(lng)
-    cnt = cnt + 1
-    if cnt > log_writeback_cnt:
-        f.close()
-        f = open('/sd/log.txt', 'a')
-        cnt = 0
-
-    if wifi.canSend():
-        # marshal data and send it
-        try:
-            data = bytearray(ustruct.pack("ff", lat, lng))
-        except TypeError:
-            print(lat)
-            print(lng)
-        wifi.send(data)
-    else:
-        wifi.connect()
-
-    # sleep until deadline
-    dur = deadline - utime.ticks_ms()
-    if dur > delay_ms: # handles rollover by not waiting at all
-        utime.sleep_ms(dur)
+    machine.idle()
