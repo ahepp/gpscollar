@@ -3,6 +3,8 @@ import usocket
 
 from network import WLAN
 
+CONNECTION_TIMEOUT = 100
+
 url="35.239.96.98"
 port=5000
 ADDR='192.168.1.100'
@@ -19,7 +21,7 @@ class WifiController:
 
     def connect(self):
         """connect to wifi"""
-        self._wlan.connect('stranger', auth=(WLAN.WPA2, 'inastrangewlan'), timeout=5000)
+        self._wlan.connect('stranger', auth=(WLAN.WPA2, 'inastrangewlan'), timeout=CONNECTION_TIMEOUT)
         while not self._wlan.isconnected():
             machine.idle()
 
