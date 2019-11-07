@@ -32,14 +32,16 @@ def log_wb(alarm):
     global log
 
     print("log_wb")
-    f = open('/sd/log.txt', 'a')
 
     irq_state = machine.disable_irq()
-    f.write(log)
+    llog = log
     log = ""
     machine.enable_irq(irq_state)
 
+    f = open('/sd/log.txt', 'a')
+    f.write(llog)
     f.close()
+
     print("end log_wb")
 
 def udp_send(alarm):
@@ -52,6 +54,7 @@ def udp_send(alarm):
     llat = lat
     llng = lng
     machine.enable_irq(irq_state)
+
     print (llat)
     print (llng)
 
@@ -67,8 +70,10 @@ def udp_send(alarm):
 py  = Pytrack()
 gps = L76GNSS(py)
 
+print("initializing wifi")
 wifi = WifiController()
 
+print("mounting sd")
 sd = SD()
 os.mount(sd, '/sd')
 
@@ -80,9 +85,11 @@ udp_send_interval_ms = 10
 log_interval_ms = 1
 log_wb_interval_ms = 10
 
+print("configuring callbacks")
 Timer.Alarm(log_coords, 1, periodic=True)
 Timer.Alarm(log_wb, 5, periodic=True)
 Timer.Alarm(udp_send, 10, periodic=True)
 
+print("entering mainline")
 while True:
     machine.idle()

@@ -22,8 +22,6 @@ class WifiController:
     def connect(self):
         """connect to wifi"""
         self._wlan.connect('stranger', auth=(WLAN.WPA2, 'inastrangewlan'), timeout=CONNECTION_TIMEOUT_MS)
-        while not self._wlan.isconnected():
-            machine.idle()
 
     def makeSock(self):
         # Open up a UDP socket to our target
